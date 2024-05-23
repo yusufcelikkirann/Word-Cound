@@ -1,55 +1,15 @@
 from django.shortcuts import render
 from django.http import HttpResponse
-# Create your views here.
 
 def home_page(request):
     return render(request, 'home.html')
-    
-# def word_count(request):
-#     print("==============================")
-#     print(request.method)
-#     print(request.FILES.keys())
-#     print("==============================")
-#     if request.method == "POST":
-#         if 'file' in request.FILES.keys():
-#             file = request.FILES['file']
-#             words = file.read().decode('utf-8')
-#         return render(request, 'word_count.html',  {"words", words})
-    
-#     elif request.method == 'GET':
-#         return render(request, 'home.html')
-#     else:
-#         return render(request, "home.html")
 
-import findspark
-findspark.init()
-from itertools import islice
-
-from pyspark.sql import SparkSession
-from pyspark.conf import SparkConf
-
-# spark = SparkSession.builder\
-#     .master('local')\
-#         .appName('PysparkWordCountApp')\
-#             .getOrCreate()
-
-# sc = spark.sparkContext 
-
-# def count_word(txt_file):
-#     rdd = sc.parallelize([txt_file])
-#     # WordCount for genres
-#     all_words = rdd.flatMap(lambda word: word.split(' ')) \
-#         .map(lambda word : (word, 1)) \
-#         .reduceByKey(lambda x, y, : x + y)
-
-#     sortedWordsCounts = sorted(all_words.collect(), key=lambda x : x[1], reverse=True)
-#     sortedWordsCounts = spark.sparkContext.parallelize(sortedWordsCounts)
-
-#     return [f"Word : {word} : Count : {count}" for word, count in sortedWordsCounts.collect()]
-
+# Kelime sayma fonksiyonu
 def count_word(txt_file):
+    # Dosyadaki tüm kelimeleri bir listeye böl
     words = txt_file.split()
 
+    # Kelimeleri ve sayımlarını tutmak için bir sözlük oluştur
     words_dict = {}
     for word in words:
         if word not in words_dict.keys():
@@ -57,21 +17,25 @@ def count_word(txt_file):
         else:
             words_dict[word] += 1
     
-    new_words = []
-    
-    for word, count in words_dict.items():
-        new_words.append(f"Word : {word} Count : {count}")
-    return new_words
-    
+    # Kelimeleri sayım değerine göre azalan sırada sırala
+    sorted_words = sorted(words_dict.items(), key=lambda item: item[1], reverse=True)
 
+    # Yeni bir liste oluştur ve her kelimenin sayımını formatlayarak bu listeye ekle
+    new_words = []
+    for word, count in sorted_words:
+        new_words.append(f"Kelime: {word} /// Sayısı: {count}")
     
+    return new_words
+
+# Kelime sayma view fonksiyonu
 def word_count(request):   
+    # Eğer istek POST ise ve bir dosya gönderildiyse
     if request.method == "POST" and request.FILES.get("file"):
         txt_file = request.FILES['file']
         file_content = txt_file.read().decode('utf-8')  
         counted_words = count_word(file_content)
         
-        return render(request, 'word_count.html', context={"word_count" : counted_words})
-    
-    
-    
+        # Kelime sayım sonuçlarını word_count.html şablonuna gönder
+        return render(request, 'word_count.html', context={"word_count": counted_words})
+    else:
+        return render(request, 'home.html')
